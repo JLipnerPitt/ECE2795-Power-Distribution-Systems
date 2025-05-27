@@ -15,36 +15,35 @@ Vbase1 = 2400;
 Vbase2 = 240;
 Sbase1 = 25e3;
 Sbase2 = 37.5e3;
-Sbase3 = 50e3;
 Zbase1 = Vbase1^2/Sbase1;
 Zbase2 = Vbase1^2/Sbase2;
 
+% Impedances
 Zline1 = (5000/5280)*(0.306+j*0.6272);
 Zline2 = (2500/5280)*(0.306+j*0.6272);
 ZT1pu = 0.018*exp(j*40*pi/180);
-ZT2pu = 0.019*exp(j*50*pi/180);
+ZT2pu = 0.02*exp(j*50*pi/180);
 ZT1 = ZT1pu*Zbase1;
 ZT2 = ZT2pu*Zbase2;
 
+% Max diversified real powers
 P12 = 57.89e3;
-P23 = 72.6e3;
-PT1 = 30.3e3;
-PT2 = 35.5e3;
+P23 = 41.56e3;
+PT1 = 22.71e3;
+PT2 = 41.56e3;
 
+% Complex powers
 S12 = (P12/pf)*exp(j*angle);
 S23 = (P23/pf)*exp(j*angle);
-S34 = (P34/pf)*exp(j*angle);
 ST1 = (PT1/pf)*exp(j*angle);
 ST2 = (PT2/pf)*exp(j*angle);
-ST3 = (PT3/pf)*exp(j*angle);
 
-
-% Current from tap
-IN1 = conj(S12/V1);
-disp(['IN1 = ', Phasor(IN1)])
+% Current into segment N1-N2
+I12 = conj(S12/VN1);
+disp(['I12 = ', Phasor(I12)])
 
 % Voltage at N2
-VN2 = V1 - IN1*Zline1;
+VN2 = V1 - I12*Zline1;
 disp(['VN2 = ', Phasor(VN2)])
 
 % Current going into T1
@@ -58,7 +57,7 @@ disp(['VT1s = ', Phasor(VT1s)])
 fprintf('\n')
 
 
-%Current flowing into N2-N3
+%Current flowing into segment N2-N3
 IN23 = conj(S23/VN2);
 disp(['IN23 = ', Phasor(IN23)])
 
@@ -81,10 +80,8 @@ function string = Phasor(z)
     %phasor: converts complex numbers to phasor form. 
     %displays phasor as a string and gives the angle in degrees.
     
-    %Takes two paramters (z, c). z is the complex number you want to
-    %convert to a phasor. c is a character you enter to denote the quantity
-    %you want. (v or V for voltage, a or A for current, and nothing for per
-    %unit.
+    %Takes one paramter (z). z is the complex number you want to
+    %convert to a phasor.
     
     magnitude = abs(z);
     %phase = round(angle(z), 3)*(180/pi);

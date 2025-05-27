@@ -28,9 +28,6 @@ ZT2 = ZT2pu*Zbase2;
 
 % Max diversified real powers
 P12 = 72.43e3;
-P23 = 41.56e3;
-PT1 = 22.71e3;
-PT2 = 41.56e3;
 
 % Complex power from tap
 S12 = (P12/pf)*exp(j*angle);

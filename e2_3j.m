@@ -39,11 +39,11 @@ ST1 = (PT1/pf)*exp(j*angle);
 ST2 = (PT2/pf)*exp(j*angle);
 
 % Current into segment N1-N2
-I12 = conj(S12/V1);
+I12 = conj(S12/VN1);
 disp(['I12 = ', Phasor(I12)])
 
 % Voltage at N2
-VN2 = V1 - I12*Zline1;
+VN2 = VN1 - I12*Zline1;
 disp(['VN2 = ', Phasor(VN2)])
 
 % Current going into T1
