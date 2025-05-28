@@ -69,7 +69,7 @@ VN3 = VN2 - IN23*Zline2;
 disp(['VN3 = ', Phasor(VN3)])
 
 % Current going into T2
-IT2 = conj(ST2/VN2);
+IT2 = conj(ST2/VN3);
 disp(['IT2 = ', Phasor(IT2)])
 
 % Secondary voltage on T2

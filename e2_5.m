@@ -35,7 +35,7 @@ ZT2 = Z2base*ZT2pu;
 ZT3 = Z3base*ZT3pu;
 ZT4 = Z4base*ZT4pu;
 
-% (a)
+% part a
 ST1maxdiversified = 4*Smax;
 ST2maxdiversified = 4*Smax;
 ST3maxdiversified = 5*Smax;
@@ -61,8 +61,8 @@ fprintf('\n')
 fprintf('\n')
 
 
+% part b
 disp('(b)')
-
 % T1
 VN1 = 2600;
 I12 = conj(Smaxseg12/VN1);
@@ -122,8 +122,8 @@ fprintf('\n')
 fprintf('\n')
 
 
+% part c
 disp('(c)')
-
 % Calculating power each segment sees
 Sload = Smaxseg12/18;
 Sload12 = Sload*18;
@@ -192,8 +192,8 @@ fprintf('\n')
 fprintf('\n')
 
 
+% part d
 disp('(d)')
-
 % Calculating currents drawn from each transformer
 Iload = I12/18;
 Iload12 = Iload*18;
@@ -209,16 +209,16 @@ VN5 = VN4 - (Iload45*Zline4);
 
 % Calculating transformer secondary voltages
 VT1sprime = VN2 - (Iload*4*ZT1);
-VT1s = VT1sprime/a;
+VT1sd = VT1sprime/a;
 
 VT2sprime = VN3 - (Iload*4*ZT2);
-VT2s = VT2sprime/a;
+VT2sd = VT2sprime/a;
 
 VT3sprime = VN4 - (Iload*5*ZT3);
-VT3s = VT3sprime/a;
+VT3sd = VT3sprime/a;
 
 VT4sprime = VN5 - (Iload*5*ZT4);
-VT4s = VT4sprime/a;
+VT4sd = VT4sprime/a;
 
 % Displaying results
 disp(['Iload = ', Phasor(Iload), ' A'])
@@ -228,14 +228,15 @@ disp(['Iload34 = ', Phasor(Iload34), ' A'])
 disp(['Iload45 = ', Phasor(Iload45), ' A'])
 fprintf('\n')
 
-disp(['VT1s = ', Phasor(VT1s)])
-disp(['VT2s = ', Phasor(VT2s)])
-disp(['VT3s = ', Phasor(VT3s)])
-disp(['VT4s = ', Phasor(VT4s)])
+disp(['VT1s = ', Phasor(VT1sd)])
+disp(['VT2s = ', Phasor(VT2sd)])
+disp(['VT3s = ', Phasor(VT3sd)])
+disp(['VT4s = ', Phasor(VT4sd)])
 fprintf('\n')
 fprintf('\n')
 
 
+% part e
 disp('(e)')
 % Calculating alocation factor
 AF = Smaxseg12/175e3;
@@ -265,33 +266,31 @@ disp(['IT1 = ', Phasor(IT1)])
 
 % Secondary voltage on T1
 VT1sprime = VN2-(IT1*ZT1);
-VT1s = VT1sprime/a;
-disp(['VT1s = ', Phasor(VT1s)])
+VT1se = VT1sprime/a;
+disp(['VT1s = ', Phasor(VT1se)])
 fprintf('\n')
-
 
 % Current flowing into segment N2-N3
 IN23 = conj(S23/VN2);
-disp(['IN23 = ', Phasor(IN23)])
+disp(['I23 = ', Phasor(IN23)])
 
 % Voltage at N3
 VN3 = VN2 - IN23*Zline2;
 disp(['VN3 = ', Phasor(VN3)])
 
 % Current going into T2
-IT2 = conj(ST2/VN2);
+IT2 = conj(ST2/VN3);
 disp(['IT2 = ', Phasor(IT2)])
 
 % Secondary voltage on T2
 VT2sprime = VN3-(IT2*ZT2);
-VT2s = VT2sprime/a;
-disp(['VT2s = ', Phasor(VT2s)])
+VT2se = VT2sprime/a;
+disp(['VT2s = ', Phasor(VT2se)])
 fprintf('\n')
-
 
 % Current flowing into segment N3-N4
 IN34 = conj(S34/VN3);
-disp(['IN34 = ', Phasor(IN34)])
+disp(['I34 = ', Phasor(IN34)])
 
 % Voltage at N4
 VN4 = VN3 - IN34*Zline3;
@@ -303,13 +302,13 @@ disp(['IT3 = ', Phasor(IT3)])
 
 % Secondary voltage on T3
 VT3sprime = VN4-(IT3*ZT3);
-VT3s = VT3sprime/a;
-disp(['VT3s = ', Phasor(VT3s)])
+VT3se = VT3sprime/a;
+disp(['VT3s = ', Phasor(VT3se)])
 fprintf('\n')
 
 % Current flowing into segment N4-N5
 IN45 = conj(S45/VN4);
-disp(['IN45 = ', Phasor(IN45)])
+disp(['I45 = ', Phasor(IN45)])
 
 % Voltage at N5
 VN5 = VN4 - IN45*Zline4;
@@ -321,14 +320,38 @@ disp(['IT4 = ', Phasor(IT4)])
 
 % Secondary voltage on T4
 VT4sprime = VN5-(IT4*ZT4);
-VT4s = VT4sprime/a;
-disp(['VT4s = ', Phasor(VT4s)])
+VT4se = VT4sprime/a;
+disp(['VT4s = ', Phasor(VT4se)])
 fprintf('\n')
 fprintf('\n')
 
 
+% part f
 disp('(f)')
 
+disp('part (d) compared to part (c):')
+% calculating percent errors
+peT1 = 100*abs((VT1sd-VT1s)/VT1s);
+peT2 = 100*abs((VT2sd-VT2s)/VT2s);
+peT3 = 100*abs((VT3sd-VT3s)/VT3s);
+peT4 = 100*abs((VT4sd-VT4s)/VT4s);
+disp(['% Error T1 = ', num2str(peT1)])
+disp(['% Error T2 = ', num2str(peT2)])
+disp(['% Error T3 = ', num2str(peT3)])
+disp(['% Error T4 = ', num2str(peT4)])
+fprintf('\n')
+
+disp('part (e) compared to part (c):')
+% calculating percent errors
+peT1 = 100*abs((VT1se-VT1s)/VT1s);
+peT2 = 100*abs((VT2se-VT2s)/VT2s);
+peT3 = 100*abs((VT3se-VT3s)/VT3s);
+peT4 = 100*abs((VT4se-VT4s)/VT4s);
+disp(['% Error T1 = ', num2str(peT1)])
+disp(['% Error T2 = ', num2str(peT2)])
+disp(['% Error T3 = ', num2str(peT3)])
+disp(['% Error T4 = ', num2str(peT4)])
+fprintf('\n')
 
 function string = Format(z, power)
     %phasor: Formats complex numbers for usage in the 'disp' function.

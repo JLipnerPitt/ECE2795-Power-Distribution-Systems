@@ -35,7 +35,7 @@ ZT2 = Z2base*ZT2pu;
 ZT3 = Z3base*ZT3pu;
 ZT4 = Z4base*ZT4pu;
 
-% (a)
+% part a
 ST1maxdiversified = 4*Smax;
 ST2maxdiversified = 4*Smax;
 ST3maxdiversified = 5*Smax;
@@ -61,8 +61,8 @@ fprintf('\n')
 fprintf('\n')
 
 
+% part b
 disp('(b)')
-
 % T1
 VN1 = 2600;
 I12 = conj(Smaxseg12/VN1);
@@ -122,14 +122,20 @@ fprintf('\n')
 fprintf('\n')
 
 
+% part c
 disp('(c)')
-
 % Calculating power each segment sees
 Sload = Smaxseg12/18;
 Sload12 = Sload*18;
 Sload23 = Sload*14;
 Sload34 = Sload*10;
 Sload45 = Sload*5;
+disp(['Sload = ', Phasor(Sload/1e3), ' kVA'])
+disp(['Sload12 = ', Phasor(Sload12/1e3), ' kVA'])
+disp(['Sload23 = ', Phasor(Sload23/1e3), ' kVA'])
+disp(['Sload34 = ', Phasor(Sload34/1e3), ' kVA'])
+disp(['Sload45 = ', Phasor(Sload45/1e3), ' kVA'])
+fprintf('\n')
 
 % T1
 I12 = conj(Sload12/VN1);
@@ -137,6 +143,12 @@ VN2 = VN1 - (I12*Zline1);
 IT1 = conj(Sload*4/VN2);
 VT1sprime = VN2 - (IT1*ZT1);
 VT1s = VT1sprime/a;
+disp('T1')
+disp(['I12 = ', Phasor(I12)])
+disp(['VN2 = ', Phasor(VN2)])
+disp(['IT1 = ', Phasor(IT1)])
+disp(['VT1s = ', Phasor(VT1s)])
+fprintf('\n')
 
 % T2
 I23 = conj(Sload23/VN2);
@@ -144,6 +156,12 @@ VN3 = VN2 - (I23*Zline2);
 IT2 = conj(Sload*4/VN3);
 VT2sprime = VN3 - (IT2*ZT2);
 VT2s = VT2sprime/a;
+disp('T2')
+disp(['I23 = ', Phasor(I23)])
+disp(['VN3 = ', Phasor(VN3)])
+disp(['IT2 = ', Phasor(IT2)])
+disp(['VT2s = ', Phasor(VT2s)])
+fprintf('\n')
 
 % T3
 I34 = conj(Sload34/VN3);
@@ -151,6 +169,12 @@ VN4 = VN3 - (I34*Zline3);
 IT3 = conj(Sload*5/VN3);
 VT3sprime = VN3 - (IT3*ZT3);
 VT3s = VT3sprime/a;
+disp('T3')
+disp(['I34 = ', Phasor(I34)])
+disp(['VN4 = ', Phasor(VN4)])
+disp(['IT3 = ', Phasor(IT3)])
+disp(['VT3s = ', Phasor(VT3s)])
+fprintf('\n')
 
 % T4
 I45 = conj(Sload45/VN4);
@@ -159,16 +183,17 @@ IT4 = conj(Sload*4/VN5);
 VT4sprime = VN5 - (IT4*ZT4);
 VT4s = VT4sprime/a;
 
-disp(['Sload12 = ', Phasor(Sload12/1e3), ' kVA'])
-disp(['Sload23 = ', Phasor(Sload23/1e3), ' kVA'])
-disp(['Sload34 = ', Phasor(Sload34/1e3), ' kVA'])
-disp(['Sload45 = ', Phasor(Sload45/1e3), ' kVA'])
+disp('T4')
+disp(['I34 = ', Phasor(I45)])
+disp(['VN4 = ', Phasor(VN5)])
+disp(['IT3 = ', Phasor(IT4)])
+disp(['VT3s = ', Phasor(VT4s)])
 fprintf('\n')
 fprintf('\n')
 
 
+% part d
 disp('(d)')
-
 % Calculating currents drawn from each transformer
 Iload = I12/18;
 Iload12 = Iload*18;
@@ -183,33 +208,35 @@ VN4 = VN3 - (Iload34*Zline3);
 VN5 = VN4 - (Iload45*Zline4);
 
 % Calculating transformer secondary voltages
-VT1sprime = VN2 - (Iload12*ZT1);
-VT1s = VT1sprime/a;
+VT1sprime = VN2 - (Iload*4*ZT1);
+VT1sd = VT1sprime/a;
 
-VT2sprime = VN3 - (Iload23*ZT2);
-VT2s = VT2sprime/a;
+VT2sprime = VN3 - (Iload*4*ZT2);
+VT2sd = VT2sprime/a;
 
-VT3sprime = VN4 - (Iload34*ZT3);
-VT3s = VT3sprime/a;
+VT3sprime = VN4 - (Iload*5*ZT3);
+VT3sd = VT3sprime/a;
 
-VT4sprime = VN5 - (Iload45*ZT4);
-VT4s = VT4sprime/a;
+VT4sprime = VN5 - (Iload*5*ZT4);
+VT4sd = VT4sprime/a;
 
 % Displaying results
+disp(['Iload = ', Phasor(Iload), ' A'])
 disp(['Iload12 = ', Phasor(Iload12), ' A'])
 disp(['Iload23 = ', Phasor(Iload23), ' A'])
 disp(['Iload34 = ', Phasor(Iload34), ' A'])
 disp(['Iload45 = ', Phasor(Iload45), ' A'])
 fprintf('\n')
 
-disp(['VT1s = ', Phasor(VT1s)])
-disp(['VT2s = ', Phasor(VT2s)])
-disp(['VT3s = ', Phasor(VT3s)])
-disp(['VT4s = ', Phasor(VT4s)])
+disp(['VT1s = ', Phasor(VT1sd)])
+disp(['VT2s = ', Phasor(VT2sd)])
+disp(['VT3s = ', Phasor(VT3sd)])
+disp(['VT4s = ', Phasor(VT4sd)])
 fprintf('\n')
 fprintf('\n')
 
 
+% part e
 disp('(e)')
 % Calculating alocation factor
 AF = Smaxseg12/175e3;
@@ -239,8 +266,8 @@ disp(['IT1 = ', Phasor(IT1)])
 
 % Secondary voltage on T1
 VT1sprime = VN2-(IT1*ZT1);
-VT1s = VT1sprime/a;
-disp(['VT1s = ', Phasor(VT1s)])
+VT1se = VT1sprime/a;
+disp(['VT1s = ', Phasor(VT1se)])
 fprintf('\n')
 
 
@@ -258,8 +285,8 @@ disp(['IT2 = ', Phasor(IT2)])
 
 % Secondary voltage on T2
 VT2sprime = VN3-(IT2*ZT2);
-VT2s = VT2sprime/a;
-disp(['VT2s = ', Phasor(VT2s)])
+VT2se = VT2sprime/a;
+disp(['VT2s = ', Phasor(VT2se)])
 fprintf('\n')
 
 
@@ -277,8 +304,8 @@ disp(['IT3 = ', Phasor(IT3)])
 
 % Secondary voltage on T3
 VT3sprime = VN4-(IT3*ZT3);
-VT3s = VT3sprime/a;
-disp(['VT3s = ', Phasor(VT3s)])
+VT3se = VT3sprime/a;
+disp(['VT3s = ', Phasor(VT3se)])
 fprintf('\n')
 
 % Current flowing into segment N4-N5
@@ -295,14 +322,34 @@ disp(['IT4 = ', Phasor(IT4)])
 
 % Secondary voltage on T4
 VT4sprime = VN5-(IT4*ZT4);
-VT4s = VT4sprime/a;
-disp(['VT4s = ', Phasor(VT4s)])
+VT4se = VT4sprime/a;
+disp(['VT4s = ', Phasor(VT4se)])
 fprintf('\n')
 fprintf('\n')
 
 
+% part f
 disp('(f)')
 
+disp('part (d) compared to part (c):')
+% calculating percent errors
+peT1 = 100*(abs(VT1sd-VT1s))/VT1s;
+peT2 = 100*(absVT2sd-VT2s)/VT2s;
+peT3 = 100*(VT3sd-VT3s)/VT3s;
+peT4 = 100*(VT4sd-VT4s)/VT4s;
+disp(['% Error T1 = ', peT1])
+disp(['% Error T2 = ', peT2])
+disp(['% Error T3 = ', peT3])
+disp(['% Error T4 = ', peT4])
+fprintf('\n')
+
+disp('part (e) compared to part (c):')
+% calculating percent errors
+peT1 = 100*(VT1sd-VT1s)/VT1s;
+peT2 = 100*(VT2sd-VT2s)/VT2s;
+peT3 = 100*(VT3sd-VT3s)/VT3s;
+peT4 = 100*(VT4sd-VT4s)/VT4s;
+fprintf('\n')
 
 function string = Format(z, power)
     %phasor: Formats complex numbers for usage in the 'disp' function.
