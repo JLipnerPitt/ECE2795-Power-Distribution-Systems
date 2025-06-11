@@ -40,6 +40,10 @@ for i in range(3):
 
 # Print results
 phases = ['A', 'B', 'C']
+
+print('The "Kron" reduced phase impedance matrix in ohms is\n')
+print("[zabc] = \n", Zabc, "\n")
+
 for i, ph in enumerate(phases):
     print(f"Phase {ph}:")
     print(f"  VLN = {VLabc_mag[i, 0]:.2f}∠{VLabc_phase[i, 0]:.2f}° V")
