@@ -42,12 +42,12 @@ for i in range(ncond):
 
 # Distance vector
 d = np.array([
+    6/12 + j * 0,
+    12/12 + j * 0,
     0 + j * 0,
-    0.5 + j * 0,
-    1 + j * 0,
-    0 + j * R,
-    0.5 + j * R,
-    1 + j * R
+    6/12 + j * R,
+    12/12 + j * R,
+    0 + j * R
 ])
 
 # Distance matrix D
