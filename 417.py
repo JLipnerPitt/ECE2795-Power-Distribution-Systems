@@ -54,7 +54,6 @@ d = np.array([
     6/12 + j*(R2 - 24/12), 12/12 + j*(R2 - 24/12), 0 + j*(R2 - 24/12),
 ])
 
-
 # Resistance vector r
 r = np.zeros(ncond)
 for i in range(ncond):
@@ -128,4 +127,7 @@ print("\nPartitioned phase impedance matrices:\n")
 print("[z11abc] =\n", z11abc)
 print("\n[z12abc] =\n", z12abc)
 print("\n[z21abc] =\n", z21abc)
-print("\n[z22abc] =\n", z22abc)
+print("\n[z22abc] =\n", z22abc, "\n")
+
+print('The "Kron" reduced phase impedance matrix in ohms is\n')
+print("[zabc] = \n", zabc, "\n")
