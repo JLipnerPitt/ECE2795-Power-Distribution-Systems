@@ -21,15 +21,15 @@ cn2 = {
     'rc': 0.41,
     'GMRs': 0.00208,
     'rs': 14.8722,
-    'dod': 1.10,
+    'dod': 1.29,
     'ds': 0.0641,
-    'k': 7,
+    'k': 13,
     'ncond': 6
 }
 
 # Additional neutral data
-neutral1 = {'GMR': 0.00814, 'r': 0.592, 'ncond': 1}  # neutral for line1
-neutral2 = {'GMR': 0.0051, 'r': 0.895, 'ncond': 1}  # neutral for line2
+neutral1 = {'GMR': 0.00814, 'r': 0.592, 'ncond': 1}  # neutral for line1 4/0 6/1 ACSR
+neutral2 = {'GMR': 0.0051, 'r': 0.895, 'ncond': 1}  # neutral for line2 2/0 ACSR
 ncond = cn1['ncond'] + cn2['ncond'] + neutral1['ncond'] + neutral2['ncond']
 
 # Geometry and derived data
@@ -48,13 +48,12 @@ print(f"rcn1 = {rcn1}, rcn2 = {rcn2}")
 
 # Distance vector
 d = np.array([
-    0 + j*0, 4/12 + j*0, 8/12 + j*0,
-    4/12 + j*(-10/12), 0 + j*(-10/12), 8/12 + j*(-10/12),
-    0 + j*R1, 4/12 + j*R1, 8/12 + j*R1,
-    4/12 + j*(R2 - 10/12), 0 + j*(R2 - 10/12), 8/12 + j*(R2 - 10/12),
-    10/12 + j*(-5/12)
+    0 + j*0, 6/12 + j*0, 12/12 + j*0, 16/12 +j*0, 
+    6/12 + j*(-24/12), 12/12 + j*(-10/12), -24/12 + 0j, 16/12 + j*(-24/12),
+    0 + j*R1, 6/12 + j*R1, 12/12 + j*R1,
+    6/12 + j*(R2 - 24/12), 12/12 + j*(R2 - 24/12), 0 + j*(R2 - 24/12),
 ])
-print(d)
+
 
 # Resistance vector r
 r = np.zeros(ncond)
@@ -92,4 +91,41 @@ for i in range(ncond):
         else:
             D[i, k] = abs(d[i] - d[k])
 
+# Primitive impedance matrix
+zprim = np.zeros((ncond, ncond), dtype=complex)
+for i in range(ncond):
+    for k in range(ncond):
+        log_term = np.log(1 / D[i, k]) + 7.93402
+        if i == k:
+            zprim[i, k] = r[i] + 0.0953 + j * 0.12134 * log_term
+        else:
+            zprim[i, k] = 0.0953 + j * 0.12134 * log_term
 
+# Partitioning
+p_total = cn1['ncond'] // 2 + cn2['ncond'] // 2
+zij = zprim[:p_total, :p_total]
+zin = zprim[:p_total, p_total:]
+znj = zprim[p_total:, :p_total]
+znn = zprim[p_total:, p_total:]
+
+# Kron reduction
+zabc = zij - zin @ np.linalg.inv(znn) @ znj
+
+# Neutral transformation matrix
+tn = -np.linalg.inv(znn) @ znj
+
+# Partitioned phase matrices
+z11abc = zabc[0:3, 0:3]
+z12abc = zabc[0:3, 3:6]
+z21abc = zabc[3:6, 0:3]
+z22abc = zabc[3:6, 3:6]
+
+# Output
+np.set_printoptions(precision=4, suppress=True)
+
+print("\nDistance matrix D =\n", D)
+print("\nPartitioned phase impedance matrices:\n")
+print("[z11abc] =\n", z11abc)
+print("\n[z12abc] =\n", z12abc)
+print("\n[z21abc] =\n", z21abc)
+print("\n[z22abc] =\n", z22abc)
