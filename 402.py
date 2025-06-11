@@ -19,7 +19,7 @@ ncond = phase_ncond + neutral_ncond
 d = np.array([
     0 + j * 29,
     7 + j * 29,
-    2.5 + j * 29,   
+    2.5+ j * 29,   
     4 + j * 25
 ])
 
