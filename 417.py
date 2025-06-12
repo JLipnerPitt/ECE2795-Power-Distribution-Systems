@@ -48,10 +48,11 @@ print(f"rcn1 = {rcn1}, rcn2 = {rcn2}")
 
 # Distance vector
 d = np.array([
-    0 + j*0, 6/12 + j*0, 12/12 + j*0, 16/12 +j*0, 
-    6/12 + j*(-24/12), 12/12 + j*(-10/12), -24/12 + 0j, 16/12 + j*(-24/12),
+    0 + j*0, 6/12 + j*0, 12/12 + j*0, 
+    6/12 + j*(-24/12), 12/12 + j*(-10/12), -24/12 + 0j,
     0 + j*R1, 6/12 + j*R1, 12/12 + j*R1,
     6/12 + j*(R2 - 24/12), 12/12 + j*(R2 - 24/12), 0 + j*(R2 - 24/12),
+    16/12 +j*0, 16/12 + j*(-24/12)
 ])
 
 # Resistance vector r
@@ -129,5 +130,5 @@ print("\n[z12abc] =\n", z12abc)
 print("\n[z21abc] =\n", z21abc)
 print("\n[z22abc] =\n", z22abc, "\n")
 
-print('The "Kron" reduced phase impedance matrix in ohms is\n')
+print('The "Kron" reduced phase impedance matrix in ohms\mile is\n')
 print("[zabc] = \n", zabc, "\n")
