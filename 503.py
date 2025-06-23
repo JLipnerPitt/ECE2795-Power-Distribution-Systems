@@ -70,6 +70,7 @@ Cabc = np.linalg.inv(Pabc)
 
 # Shunt admittance matrix (µS/mile)
 yabc = j * 2 * np.pi * f * Cabc
+yabc = np.array([[yabc[0, 0], 0, yabc[1,0]], [0, 0, 0], [yabc[1, 0], 0, yabc[1, 1]]])
 
 # Display results
 print("Image distance matrix S (feet):")
