@@ -9,7 +9,7 @@ class DistributionLine:
     DistributionLine class to hold distribution line information
     """
 
-    def __init__(self, name, bus1: str, bus2: str, geometry: Geometry, length: float):
+    def __init__(self, name, bus1: Bus, bus2: Bus, geometry: Geometry, length: float):
         self.name = name
         self.bus1 = bus1
         self.bus2 = bus2
@@ -55,10 +55,11 @@ class DistributionLine:
 
         # Kron reduction
         zabc = zij - (zin @ znj) / znn
+        Zabc = self.length*zabc
 
         # Neutral transformation matrix
         tn = -znj / znn
-        return zabc, tn
+        return Zabc, tn
 
 
     def calc_Pprim(self):
@@ -94,7 +95,8 @@ class DistributionLine:
         Cabc = np.linalg.inv(Pabc)
 
         # Shunt admittance matrix (µS/mile)
-        Yabc = j * 2 * np.pi * self.freq * Cabc
+        yabc = j * 2 * np.pi * self.freq * Cabc
+        Yabc = self.length*yabc
         return Yabc
 
 
@@ -107,7 +109,7 @@ if __name__ == '__main__':
     phase_conductor = Conductor("1/0_ACSR", 0.398, 0.00446, 1.12, 230)
     neutral_conductor = Conductor("1/0_ACSR", 0.398, 0.00446, 1.12, 230)
     geometry1 = Geometry("Geometry 1", [0+j*29, 7+j*29, 2.5+j*29, 4+j*25], 3, phase_conductor, neutral_conductor)
-    line1 = DistributionLine("OH1", "bus1", "bus2", geometry1, 10000)
+    line1 = DistributionLine("OH1", "bus1", "bus2", geometry1, 1.893939)
 
     print("The primitive impedance matrix in ohms/mile is\n")
     print("[z] = \n", line1.Zprim, "\n")
