@@ -7,11 +7,10 @@ Author: Justin Lipner, Bailey Stout
 Date: 2025-02-03
 """
 
-from Component import Load, Generator, Reactor, Capacitor
+from Component import Load, Generator
 import numpy as np
 from Bus import Bus
 from DistributionLine import DistributionLine
-#from Bundle import Bundle
 from Geometry import Geometry
 from Transformer import Transformer
 from Conductor import Conductor
@@ -95,7 +94,7 @@ class Circuit:
             self.bus_order.append(self.count)
 
 
-    def add_load(self, name: str, bus: str, real: float, reactive: float):
+    def add_load(self, name: str, bus: str, real: list[float], pf: list[float], connection: str = 'Y', phases=None):
         """
         Adds a load to system.
         :param name: Name of load
@@ -112,31 +111,10 @@ class Circuit:
             print(f"{bus} does not exist. No changes to circuit.")
             return
 
-        load = Load(name, bus, real, reactive)
+        load = Load(name, bus, real, pf, connection, phases)
         self.loads.update({name: load})
-        self.buses[bus].set_power(-real*1e6, -reactive*1e6)
+        #self.buses[bus].set_power(-real*1e6, -reactive*1e6)
 
-
-    def add_dline_from_geometry(self, name: str, bus1: str, bus2: str, bundle: str, geometry: str,
-                  length: float):
-        """
-        Adds a transmission line to system.
-        :param name: Name of transmission line
-        :param bus1: First bus connection
-        :param bus2: Second bus connection
-        :param bundle: Bundle information passed via subclass
-        :param geometry: Geometry information passed via subclass
-        :param length: Length of transmission line in miles
-        :return:
-        """
-        
-        if name in self.distribution_lines:
-            print(f"{name} already exists. No changes to circuit")
-            return
-        
-        dline = DistributionLine(name, self.get_bus(bus1), self.get_bus(bus2), self.get_geometry(geometry), length)
-        self.distribution_lines.update({name: dline})
-        self.changed = True
 
     '''
     def add_dline_from_parameters(self, name: str, bus1: str, bus2: str, R: float, X: float, B: float):
@@ -253,52 +231,28 @@ class Circuit:
     
         else:
             geometry = Geometry(name, d, nphases, phase_conductor, neutral_conductor)
-            print(d)
             self.geometries.update({name: geometry})
 
 
-    def add_series_reactor(self, name: str, mvar: float, bus1: str, bus2: str):
-
-        if name in self.reactors:
-            print("Name already exists. No changes to circuit")
+    def add_dline_from_geometry(self, name: str, bus1: str, bus2: str, geometry: str, length: float):
+        """
+        Adds a transmission line to system.
+        :param name: Name of transmission line
+        :param bus1: First bus connection
+        :param bus2: Second bus connection
+        :param bundle: Bundle information passed via subclass
+        :param geometry: Geometry information passed via subclass
+        :param length: Length of transmission line in miles
+        :return:
+        """
         
-        else:
-            reactor = Reactor(name, mvar, self.get_bus(bus1), self.get_bus(bus2))
-            self.reactors.update({name: reactor})
-            self.changed = True
-    
-
-    def add_shunt_reactor(self, name: str, mvar: float, bus: str):
-
-        if name in self.reactors:
-            print("Name already exists. No changes to circuit")
+        if name in self.distribution_lines:
+            print(f"{name} already exists. No changes to circuit")
+            return
         
-        else:
-            reactor = Reactor(name, mvar, self.get_bus(bus))
-            self.reactors.update({name: reactor})
-            self.changed = True
-
-
-    def add_capacitor(self, name: str, mvar: float, bus1: str, bus2: str):
-
-        if name in self.capacitors:
-            print("Name already exists. No changes to circuit")
-        
-        else:
-            capacitor = Capacitor(name, mvar, self.get_bus(bus1), self.get_bus(bus2))
-            self.capacitors.update({name: capacitor})
-            self.changed = True
-
-
-    def add_shunt_capacitor(self, name: str, mvar: float, bus: str):
-
-        if name in self.capacitors:
-            print("Name already exists. No changes to circuit")
-        
-        else:
-            capacitor = Capacitor(name, mvar, self.get_bus(bus))
-            self.capacitors.update({name: capacitor})
-            self.changed = True
+        dline = DistributionLine(name, self.get_bus(bus1), self.get_bus(bus2), self.get_geometry(geometry), length)
+        self.distribution_lines.update({name: dline})
+        self.changed = True
 
 
     def get_conductor(self, name: str):
@@ -328,64 +282,12 @@ class Circuit:
         return self.geometries[name]
 
 
-    def calc_Ybus(self):
-        """
-        Calculates systems admittance matrix.
-        :return: Admittance matrix (list[list[complex double]])
-        """
-        num_buses = len(self.buses)
-        y_bus = np.zeros((num_buses, num_buses), dtype=complex)
-
-        # Iterate through line impedance
-        for line in self.transmission_lines.values():
-            from_bus = line.bus1.index-1
-            to_bus = line.bus2.index-1
-            y_bus[from_bus, from_bus] += line.yprim.iloc[0, 0]
-            y_bus[from_bus, to_bus] += line.yprim.iloc[0, 1]
-            y_bus[to_bus, from_bus] += line.yprim.iloc[1, 0]
-            y_bus[to_bus, to_bus] += line.yprim.iloc[1, 1]
-
-        # Iterate through XFMR impedance
-        for xfmr in self.transformers.values():
-            from_bus = xfmr.bus1.index-1
-            to_bus = xfmr.bus2.index-1
-            y_bus[from_bus, from_bus] += xfmr.yprim.iloc[0, 0]
-            y_bus[from_bus, to_bus] += xfmr.yprim.iloc[0, 1]
-            y_bus[to_bus, from_bus] += xfmr.yprim.iloc[1, 0]
-            y_bus[to_bus, to_bus] += xfmr.yprim.iloc[1, 1]
-
-        # Iterate through reactor dictionary
-        for reactor in self.reactors.values():
-            from_bus = reactor.bus1.index-1
-            to_bus = reactor.bus2.index-1
-            y_bus[from_bus, from_bus] += reactor.Yprim.iloc[0, 0]
-            y_bus[from_bus, to_bus] += reactor.Yprim.iloc[0, 1]
-            y_bus[to_bus, from_bus] += reactor.Yprim.iloc[1, 0]
-            y_bus[to_bus, to_bus] += reactor.Yprim.iloc[1, 1]
-        
-        # Iterate through capacitor dictionary
-        for capacitor in self.capacitors.values():
-            from_bus = capacitor.bus1.index-1
-            to_bus = capacitor.bus2.index-1
-            y_bus[from_bus, from_bus] += capacitor.Yprim.iloc[0, 0]
-            y_bus[from_bus, to_bus] += capacitor.Yprim.iloc[0, 1]
-            y_bus[to_bus, from_bus] += capacitor.Yprim.iloc[1, 0]
-            y_bus[to_bus, to_bus] += capacitor.Yprim.iloc[1, 1]
-
-        self.Ybus = y_bus
-        return y_bus
+    def get_line_impedance(self, line: str):
+        return self.distribution_lines[line].Zabc
     
 
-    def print_Ybus(self):
-        """
-        Prints power the system's Ybus matrix.
-        :return:
-        """
-        self.Ybusdf = pd.DataFrame(data=self.Ybus.round(2), index=self.bus_order, columns=self.bus_order)
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.width', 1000)
-        print(self.Ybusdf.to_string())
+    def get_line_shunt_admittance(self, line: str):
+        return self.distribution_lines[line].Yabc
 
 
     def change_slack(self, old: str, new: str):
@@ -405,53 +307,14 @@ class Circuit:
         self.slack_index = self.buses[new].index
         self.pv_indexes.remove(self.buses[new].index)
         self.pv_indexes.append(self.buses[old].index)
-
-
-    def compute_power_injection(self, x, pq_and_pv_indexes, pv_indexes, pq_indexes):
-        """
-        Calculates the power injection at each bus.
-        :param x: Dataframe that holds bus voltages and angles
-        :param pq_and_pv_indexes: List containing each PQ and PV bus index
-        :param pv_indexes: List containing each PV bus index
-        :param pq_indexes: List containing each PQ bus index
-        :return:
-        """
-        N = self.count
-        Ymag = np.abs(self.Ybus)
-        theta = np.angle(self.Ybus)
-        
-        d = x[x.index.str.startswith('d')]
-        V = x[x.index.str.startswith('V')]
-        P = []
-        Q = []
-        for k in pq_and_pv_indexes:
-            sum1 = 0
-            sum2 = 0
-            for n in range(N):
-                Ykn = Ymag[k-1, n]
-                Vn = float(V.iloc[n, 0])
-                dk = float(d.iloc[k-1, 0])
-                dn = float(d.iloc[n, 0])
-                sum1 += Ykn*Vn*cos(dk - dn - theta[k-1, n])
-                sum2 += Ykn*Vn*sin(dk - dn - theta[k-1, n])
-            
-            Vk = float(V.iloc[k-1, 0])
-            Pk = Vk*sum1
-            P.append(Pk)
-            if k in pv_indexes:
-              continue
-            Qk = Vk*sum2
-            Q.append(Qk)
-            
-        P = np.array(P)
-        Q = np.array(Q)
-        y = np.concatenate((P, Q))
-        indexes = [f"P{int(i)}" for i in np.sort(np.concatenate((pq_indexes, pv_indexes)))]
-        [indexes.append(f"Q{int(i)}") for i in pq_indexes]
-        y = pd.DataFrame(y, index=indexes, columns=["y"])
-        return y
     
     
+    def do_fbsweep(self):
+        from Solution import LIT
+        solution = LIT(self)
+        self.voltages = solution.lit()
+
+
     def to_rectangular(self):
         """Converts the magnitude and angle values of the bus voltages into rectangular complex voltages
         :return:
@@ -490,13 +353,6 @@ class Circuit:
         for gen in self.generators.values():
             index = self.buses[gen.bus].index-1
             gen.set_power(P.iloc[index, 0]*settings.powerbase/1e6, Q.iloc[index, 0]*settings.powerbase/1e6)
-    
-
-    def update_reactor_power(self):
-        for reactor in self.reactors.values():
-            index = self.buses[reactor.bus1.name].index-1
-            V_reactor = self.voltages[index]  # actual bus voltage found after power flow
-            reactor.update_power(V_reactor)
 
             
     def print_data(self, dcpowerflow=False):
