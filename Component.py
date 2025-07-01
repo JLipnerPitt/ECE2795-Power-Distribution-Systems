@@ -10,7 +10,7 @@ class Load:
     def __init__(self,
                  name: str,
                  bus: str,
-                 real_power: list[float],
+                 kva: list[float],
                  pf: list[float],
                  connection: str = 'Y',
                  phases=None):
@@ -26,7 +26,7 @@ class Load:
         self.bus        = bus
         self.connection = connection
         self.phases     = ['A','B','C'] if phases is None else phases
-        self.P = np.array(real_power)*1e3
+        self.kva = np.array(kva)*1e3
         self.pf = np.array(pf)
 
 
