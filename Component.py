@@ -1,113 +1,33 @@
 #  This class contains various components used in electrical circuits. 
 #  Component is a parent class for all the child "component" classes.
-from math import acos
 from Settings import settings
-import pandas as pd
-
-
-class Reactor:
-    def __init__(self, name: str, mvar: float, bus1: str, bus2: str = None):
-        self.name = name
-        self.bus1 = bus1
-        self.bus2 = bus1 if bus2 == None else bus2
-        self.type = "shunt" if bus2 == None else "series"
-
-        self.Qbase = -mvar*1e6  # base reactive power
-        self.Q = -mvar*1e6  # actual reactive power. assumed to be equal to base upon object creation
-
-        self.base_kv = bus1.base_kv  # base kv taken from the bus
-
-        self.Zbase = self.base_kv**2/settings.powerbase
-        self.Z = 1j*self.base_kv**2/self.Qbase
-        self.Zpu = self.Z/self.Zbase
-
-        self.Y = 1/self.Z
-        self.Ypu = 1/self.Zpu
-        self.Yprim = self.calc_yprim()
-
-
-    def calc_yprim(self):
-
-        if self.type == "series":
-            from_bus = self.bus1.index
-            to_bus = self.bus2.index
-            yprim = [[self.Ypu, -self.Ypu], [-self.Ypu, self.Ypu]]
-            df = pd.DataFrame(yprim, index=[from_bus, to_bus], columns=[from_bus, to_bus])
-
-        elif self.type == "shunt":
-            bus = self.bus1.index
-            yprim = [[self.Ypu, 0], [0, 0]]
-            df = pd.DataFrame(yprim, index=[bus, bus], columns=[bus, bus])
-
-        return df
-  
-
-    def update_power(self, v):
-        """
-        Calculates the power consumption. Assumes constant impedance.
-        :param v: The voltage the reactor is operating at.
-        """
-        print(self.Zpu)
-        print(abs(self.Zpu))
-        self.Q = (abs(v**2)/abs(self.Zpu))*self.Qbase
-        print(self.Q)
-        
-
-
-
-
-class Capacitor:
-    def __init__(self, name: str, mvar: float, bus1: str, bus2: str = None):
-        self.name = name
-        self.bus1 = bus1
-        self.bus2 = bus1 if bus2 == None else bus2
-        self.mvar = mvar*1e6
-        self.type = "shunt" if bus2 == None else "series"
-        self.voltage = bus1.base_kv
-        self.Zbase = self.voltage**2/settings.powerbase
-        self.Z = self.voltage**2/(1j*self.mvar)
-        self.Zpu = self.Z/self.Zbase
-        self.Y = 1/self.Z
-        self.Ypu = 1/self.Zpu   
-        self.Yprim = self.calc_yprim()
-    
-
-    def calc_yprim(self):
-
-        if self.type == "series":
-            from_bus = self.bus1.index
-            to_bus = self.bus2.index
-            yprim = [[self.Ypu, -self.Ypu], [-self.Ypu, self.Ypu]]
-            df = pd.DataFrame(yprim, index=[from_bus, to_bus], columns=[from_bus, to_bus])
-
-        elif self.type == "shunt":
-            bus = self.bus1.index
-            yprim = [[self.Ypu, 0], [0, 0]]
-            df = pd.DataFrame(yprim, index=[bus, bus], columns=[bus, bus])
-
-        return df
-
+import numpy as np
 
 class Load:
     """
-    Class to represent load objects
+    Unbalanced, multiphase Load.
     """
-    def __init__(self, name: str, bus: str, real_power: float, reactive_power: float):
+    def __init__(self,
+                 name: str,
+                 bus: str,
+                 real_power: list[float],
+                 pf: list[float],
+                 connection: str = 'Y',
+                 phases=None):
         """
-        Constructor for Load class
-        :param name: Name of load
-        :param bus: Bus connection
-        :param real_power: Real power load is using
-        :param reactive_power: Reactive power load is using
+        :param name:           Load name
+        :param bus:            Bus this load is connected to
+        :param real_power:     list of real powers for phase a, b, c
+        :param pf:             list of each phases power factor
+        :param connection:     'Y' or 'Δ' defaults to 'Y'
+        :param phases:         list of phase labels (defaults to keys of real_power)
         """
-        self.name = name
-        self.bus = bus
-        self.real_power = real_power*1e6
-        self.reactive_power = reactive_power*1e6
-        self.Smag = (self.real_power**2 + self.reactive_power**2)**(1/2)
-        self.S = self.real_power + 1j*self.reactive_power
-        self.pf = self.real_power/self.Smag
-        self.angle = acos(self.pf)
+        self.name       = name
+        self.bus        = bus
+        self.connection = connection
+        self.phases     = ['A','B','C'] if phases is None else phases
+        self.P = np.array(real_power)*1e3
+        self.pf = np.array(pf)
 
 
 
@@ -193,3 +113,11 @@ class Generator:
             Y0prim = 1/(3*self.Zn+self.X0)
         
         return Y0prim
+
+
+# validation tests
+if __name__ == '__main__':
+    from Component import Load
+    load1 = Load("Load1", "Bus3", [1275, 1800, 2375], [0.85, 0.9, 0.95])
+    print(load1.P)
+    print(load1.pf)
