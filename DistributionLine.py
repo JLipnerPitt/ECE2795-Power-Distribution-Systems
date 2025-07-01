@@ -100,7 +100,6 @@ class DistributionLine:
         return Yabc
 
 
-
 # validation tests
 if __name__ == '__main__':
     from Geometry import Geometry
