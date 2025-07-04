@@ -59,13 +59,19 @@ class DistributionLine:
 
         # Neutral transformation matrix
         tn = -znj / znn
+
+        mask = np.array(self.geometry.phases, dtype=bool)
+        # zero out unwanted rows
+        Zabc[~mask, :] = 0
+        # zero out unwanted columns
+        Zabc[:, ~mask] = 0
         return Zabc, tn
 
 
     def calc_Pprim(self):
         # Pre‐allocate matrices
-        S = np.zeros((self.geometry.ncond, self.geometry.ncond), dtype=float)
-        Pprim = np.zeros((self.geometry.ncond, self.geometry.ncond), dtype=float)
+        S = np.zeros((self.geometry.ncond, self.geometry.ncond), dtype=complex)
+        Pprim = np.zeros((self.geometry.ncond, self.geometry.ncond), dtype=complex)
 
         # Build image distances S
         for i in range(self.geometry.ncond):
@@ -96,7 +102,13 @@ class DistributionLine:
 
         # Shunt admittance matrix (µS/mile)
         yabc = j * 2 * np.pi * self.freq * Cabc
-        Yabc = self.length*yabc
+        Yabc = self.length*yabc*10e-6
+
+        mask = np.array(self.geometry.phases, dtype=bool)
+        # zero out unwanted rows
+        Yabc[~mask, :] = 0
+        # zero out unwanted columns
+        Yabc[:, ~mask] = 0
         return Yabc
 
 
@@ -105,9 +117,10 @@ if __name__ == '__main__':
     from Geometry import Geometry
     from Conductor import Conductor
     from DistributionLine import DistributionLine
+    
     phase_conductor = Conductor("1/0_ACSR", 0.398, 0.00446, 1.12, 230)
     neutral_conductor = Conductor("1/0_ACSR", 0.398, 0.00446, 1.12, 230)
-    geometry1 = Geometry("Geometry 1", [0+j*29, 7+j*29, 2.5+j*29, 4+j*25], 3, phase_conductor, neutral_conductor)
+    geometry1 = Geometry("Geometry 1", [0+j*29, 7+j*29, 2.5+j*29, 4+j*25], phase_conductor, neutral_conductor, [0, 1, 0])
     line1 = DistributionLine("OH1", "bus1", "bus2", geometry1, 1.893939)
 
     print("The primitive impedance matrix in ohms/mile is\n")
@@ -116,6 +129,22 @@ if __name__ == '__main__':
     print('The "Kron" reduced phase impedance matrix in ohms/mile is\n')
     print("[zabc] = \n", line1.Zabc, "\n")
 
-    print("\nShunt admittance matrix yabc (µS/mile):")
+    print("\nShunt admittance matrix yabc (S/mile):")
     print(line1.Yabc)
+    print()
 
+    
+    phase_conductor = Conductor("336400_26/7_ACSR", 0.721, 0.0244, 0.306, 530)
+    neutral_conductor = Conductor("4/0_6/1_ACSR", 0.563, 0.00814, 0.592, 340)
+    geometry2 = Geometry("Geometry 2", [0 + j*29, 7+j*29, 2.5 + j*29, 4+j*25], phase_conductor, neutral_conductor)
+    line2 = DistributionLine("OH1", "bus1", "bus2", geometry2, 1.893939)
+
+    print("The primitive impedance matrix in ohms/mile is\n")
+    print("[z] = \n", line2.Zprim, "\n")
+
+    print('The "Kron" reduced phase impedance matrix in ohms/mile is\n')
+    print("[zabc] = \n", line2.Zabc, "\n")
+
+    print("\nShunt admittance matrix yabc (S/mile):")
+    print(line2.Yabc)
+    

@@ -12,7 +12,6 @@ import numpy as np
 from Bus import Bus
 from DistributionLine import DistributionLine
 from Geometry import Geometry
-from Transformer import Transformer
 from Conductor import Conductor
 from Settings import settings
 from math import sin, cos
@@ -49,10 +48,8 @@ class Circuit:
         self.pq_and_pv_indexes = []
         self.bus_order = []
 
-        self.Ybus = None # system admittance matrix
-        self.x = None # stores bus voltages and angles after power flow is ran
-        self.y = None # stores bus power injections after power flow is ran
         self.voltages = None
+        self.currents = None
         
         self.changed = False
 
@@ -94,7 +91,7 @@ class Circuit:
             self.bus_order.append(self.count)
 
 
-    def add_load(self, name: str, bus: str, real: list[float], pf: list[float], connection: str = 'Y', phases=None):
+    def add_load(self, name: str, bus: str, real: list[float], pf: list[float], type: str = 'PQ', connection: str = 'Y', phases=None):
         """
         Adds a load to system.
         :param name: Name of load
@@ -111,7 +108,7 @@ class Circuit:
             print(f"{bus} does not exist. No changes to circuit.")
             return
 
-        load = Load(name, bus, real, pf, connection, phases)
+        load = Load(name, bus, real, pf, type, connection, phases)
         self.loads.update({name: load})
         #self.buses[bus].set_power(-real*1e6, -reactive*1e6)
 
@@ -137,27 +134,6 @@ class Circuit:
         self.transmission_lines.update({name: tline})
         self.changed = True
     '''
-    
-    def add_transformer(self, name: str, type: str, bus1: str, bus2: str, power_rating: float,
-                        impedance_percent: float, x_over_r_ratio: float, gnd_impedance=None):
-        """
-        Adds a transformer to system.
-        :param name: Name of transformer
-        :param bus1: First bus connection
-        :param bus2: Second bus connection
-        :param power_rating: Power rating
-        :param impedance_percent: Impedance percent
-        :param x_over_r_ratio: X/R Ratio
-        :return:
-        """
-        if name in self.transformers:
-            print(f"{name} already exists. No changes to circuit")
-            return
-        
-        transformer = Transformer(name, type, self.get_bus(bus1), self.get_bus(bus2), power_rating, impedance_percent,
-                                      x_over_r_ratio, gnd_impedance)
-        self.transformers.update({name: transformer})
-        self.changed = True
     
 
     def add_generator(self, name: str, bus: str, voltage: float, real_power: float, pos_imp = 0.0, neg_imp = 0.0, zero_imp = 0.0, gnd_imp = 0.0, var_limit = float('inf')):
@@ -218,7 +194,7 @@ class Circuit:
             self.conductors.update({name: conductor})
 
 
-    def add_geometry(self, name: str, d: list[complex], nphases: int, phase_conductor: Conductor, neutral_conductor: Conductor):
+    def add_geometry(self, name: str, d: list[complex], phase_conductor: Conductor, neutral_conductor: Conductor, phases=[1, 1, 1]):
         """
         Adds geometry to circuit object for repeated use
         :param name: Name of geometry
@@ -230,7 +206,7 @@ class Circuit:
             print("Name already exists. No changes to circuit")
     
         else:
-            geometry = Geometry(name, d, nphases, phase_conductor, neutral_conductor)
+            geometry = Geometry(name, d, phase_conductor, neutral_conductor, phases)
             self.geometries.update({name: geometry})
 
 
@@ -309,23 +285,18 @@ class Circuit:
         self.pv_indexes.append(self.buses[old].index)
     
     
-    def do_fbsweep(self):
+    def do_fbsweep1(self):
         from Solution import LIT
         solution = LIT(self)
-        self.voltages = solution.lit()
+        self.voltages, self.currents = solution.lit1()
+        self.print_data()
+    
 
-
-    def to_rectangular(self):
-        """Converts the magnitude and angle values of the bus voltages into rectangular complex voltages
-        :return:
-        """
-        mag = self.x[self.x.index.str.startswith("V")].to_numpy()
-        angles = self.x[self.x.index.str.startswith("d")].to_numpy()
-        N = len(mag)
-        V = np.zeros(N, dtype=complex)
-        for i in range(N):
-            V[i] = mag[i]*(cos(angles[i])+1j*sin(angles[i]))
-        return V
+    def do_fbsweep2(self):
+        from Solution import LIT
+        solution = LIT(self)
+        self.voltages, self.currents = solution.lit2()
+        self.print_data()
     
 
     def update_voltages_and_angles(self):
@@ -340,76 +311,15 @@ class Circuit:
             index = self.buses[bus].index-1
             self.buses[bus].set_bus_v(V.iloc[index, 0])
             self.buses[bus].set_angle(d.iloc[index, 0])
-    
-
-    def update_generator_power(self):
-        """
-        Updates the power delivered by each generator with the power calcuated in the power flow results.
-        :return:
-        """
-        P = self.y[self.y.index.str.startswith("P")]
-        Q = self.y[self.y.index.str.startswith("Q")]
-
-        for gen in self.generators.values():
-            index = self.buses[gen.bus].index-1
-            gen.set_power(P.iloc[index, 0]*settings.powerbase/1e6, Q.iloc[index, 0]*settings.powerbase/1e6)
 
             
-    def print_data(self, dcpowerflow=False):
+    def print_data(self):
         """
         Prints necessary information from system.
         :return:
         """
-        x = self.x.to_numpy()
-        angles = np.rad2deg(x[0:self.count]).round(3)
-        pu_voltages = x[self.count:].round(5)
-        voltages = []
-        nominal_voltages = []
-        number = []
-        name = []
-
-        load_mw = np.zeros((self.count, 1))
-        load_mvar = np.zeros((self.count, 1))
-        gen_mw = np.zeros((self.count, 1))
-        gen_mvar = np.zeros((self.count, 1))
-        shunt_mvar = np.zeros((self.count, 1), dtype=complex)
-
-        for bus in self.buses.values():
-            nominal_voltages.append(bus.base_kv/1e3)
-            voltages.append((bus.V/1e3).round(3))
-            number.append(bus.index)
-            name.append(bus.name)
-        
-        if dcpowerflow==False:
-            for load in self.loads.values():
-                index = self.buses[load.bus].index-1
-                load_mw[index, 0] = load.real_power/1e6
-                load_mvar[index, 0] = load.reactive_power/1e6
-        else:
-            for load in self.loads.values():
-                index = self.buses[load.bus].index-1
-                load_mw[index, 0] = load.real_power/1e6
-        
-        for gen in self.generators.values():
-            index = self.buses[gen.bus].index-1
-            gen_mw[index, 0] = round(gen.real_power/1e6, 2)
-            gen_mvar[index, 0] = round(gen.reactive_power/1e6, 2)
-        
-        for reactor in self.reactors.values():
-            index = self.buses[reactor.bus1.name].index-1
-            shunt_mvar[index, 0] = round(reactor.Q/1e6, 2)
-            
-        voltages = np.array([voltages]).T
-        nominal_voltages = np.array([nominal_voltages]).T
-        number = np.array([number]).T
-        name = np.array([name]).T
-        data = np.concatenate((number, name, nominal_voltages, pu_voltages, voltages, angles, load_mw, load_mvar, gen_mw, gen_mvar, shunt_mvar), axis=1)
-
-        datadf = pd.DataFrame(data=data, index=self.bus_order, columns=["Number", "Name", "Nom kV", "PU Volt", "Volt (kV)", "Angle(Deg)", "Load MW", "Load MVAR", "Gen MW", "Gen MVAR", "Shunt MVAR"])
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.width', 1000)
-        print(datadf.to_string())
+        for i in range(len(self.buses)):
+            print(f"[VLGabc]{i+1} =", np.abs(self.voltages[f"V{i+1}"]))
 
     
 
@@ -417,5 +327,5 @@ class Circuit:
 if __name__ == '__main__':
     
     import Validations
-    #Validations.Create4NodeSystem()
     Validations.CreateProject1()
+    Validations.CreateProject2()

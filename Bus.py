@@ -6,6 +6,7 @@ Author: Justin Lipner
 Date: 2025-01-23
 """
 
+import numpy as np
 
 class Bus:
     """
@@ -26,16 +27,26 @@ class Bus:
         self.phases = ['A','B','C'] if phases is None else phases
 
         # initialize per-phase quantities
-        self.Vpu   = {phase: 1.0     for phase in self.phases}
-        self.V     = {phase: self.base_kv for phase in self.phases}
-        self.angle = {phase: 0.0     for phase in self.phases}
-        self.P     = {phase: 0.0     for phase in self.phases}  # real power injection (W)
-        self.Q     = {phase: 0.0     for phase in self.phases}  # reactive power injection (var)
+        self.Vpu = {phase: 1.0 for phase in self.phases}
+        self.V = np.zeros((3, 3))
+        self.V = {phase: self.base_kv for phase in self.phases}
+        self.angle = {phase: 0.0 for phase in self.phases}
+        self.P     = {phase: 0.0 for phase in self.phases}  # real power injection (W)
+        self.Q     = {phase: 0.0 for phase in self.phases}  # reactive power injection (var)
         self.type  = "PQ"  # you might also want per-phase types
+
+
+    def set_power(self, P: float, Q: float):
+        for i in range(3):
+            self.P[i] = P
+            self.Q[i] = Q
+
 
 
 # validation tests
 if __name__ == '__main__':
     from Bus import Bus
     bus1 = Bus("Bus 1", 20, 1)
+    bus2 = Bus("Bus2", 20, 2, ["B", "C"])
     print(bus1.name, bus1.base_kv, bus1.index, bus1.V)
+    print(bus2.name, bus2.base_kv, bus2.index, bus2.V)

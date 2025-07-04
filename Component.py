@@ -1,7 +1,9 @@
 #  This class contains various components used in electrical circuits. 
 #  Component is a parent class for all the child "component" classes.
 from Settings import settings
+from math import sin, cos
 import numpy as np
+j = 1j
 
 class Load:
     """
@@ -12,6 +14,7 @@ class Load:
                  bus: str,
                  kva: list[float],
                  pf: list[float],
+                 type: str = 'PQ',
                  connection: str = 'Y',
                  phases=None):
         """
@@ -28,6 +31,14 @@ class Load:
         self.phases     = ['A','B','C'] if phases is None else phases
         self.kva = np.array(kva)*1e3
         self.pf = np.array(pf)
+        self.type = type
+        self.S = self.calc_S()
+    
+
+    def calc_S(self):
+        S = np.array([self.kva[0]*(cos(self.pf[0])+j*sin(self.pf[0])), self.kva[1]*(cos(self.pf[1])+j*sin(self.pf[1])), self.kva[2]*(cos(self.pf[2])+j*sin(self.pf[2]))])
+        return S
+
 
 
 
@@ -57,7 +68,7 @@ class Generator:
         self.X1 = self.calc_X1(sub_transient_reactance)
         self.X2 = self.calc_X2(neg_impedance)
         self.Zn = gnd_impedance
-        self.Y0prim = self.calc_Y0prim()
+        self.Y0prim = self.calc_Y0prim() if self.X0 != 0.0 else 0.0
         self.var_limit = var_limit
     
 
@@ -119,5 +130,6 @@ class Generator:
 if __name__ == '__main__':
     from Component import Load
     load1 = Load("Load1", "Bus3", [1275, 1800, 2375], [0.85, 0.9, 0.95])
-    print(load1.P)
+    print(load1.kva)
     print(load1.pf)
+    print(load1.S)

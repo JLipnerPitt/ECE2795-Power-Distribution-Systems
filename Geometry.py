@@ -13,14 +13,13 @@ class Geometry:
     """
     Subclass geometry for distribution lines
     """
-    def __init__(self, name: str, d: list[complex], nphases: int, phase_conductor: Conductor, neutral_conductor: Conductor):
-        # pos = [[], []]
+    def __init__(self, name: str, d: list[complex], phase_conductor: Conductor, neutral_conductor: Conductor, phases=[1, 1, 1]):
         self.name = name
-        self.nphases = nphases
+        self.nphases = 3
+        self.phases = phases
+        self.ncond = 4
         self.phase_conductor = phase_conductor
         self.neutral_conductor = neutral_conductor
-        self.ncond = len(d)
-        self.nphases = nphases
         self.d = d
         self.D = self.calc_D()  # in meters
         self.Dshunt = self.calc_Dshunt()
@@ -31,14 +30,14 @@ class Geometry:
         for i in range(self.ncond):
             for k in range(self.ncond):
                 if i == k:
-                    D[i, k] = self.phase_conductor.GMR if i < self.nphases else self.neutral_conductor.GMR
+                    D[i, k] = self.phase_conductor.GMR if i < self.ncond else self.neutral_conductor.GMR
                 else:
                     D[i, k] = abs(self.d[i] - self.d[k])
         return D
     
 
     def calc_Dshunt(self):
-        Dshunt = np.zeros((self.ncond, self.ncond), dtype=float)
+        Dshunt = np.zeros((self.ncond, self.ncond), dtype=complex)
         for i in range(self.ncond):
             for k in range(self.ncond):
                 if i == k:
@@ -58,5 +57,5 @@ if __name__ == '__main__':
     from Conductor import Conductor
     phase_conductor = Conductor("1/0_ACSR", 0.398, 0.0446, 1.12, 230)
     neutral_conductor = Conductor("1/0_ACSR", 0.398, 0.0446, 1.12, 230)
-    geometry1 = Geometry("Geometry 1", [0+j*29, 7+j*29, 2.5+j*29, 4+j*25], 3, phase_conductor, neutral_conductor)
+    geometry1 = Geometry("Geometry 1", [0+j*0, 7+j*29, 0+j*0, 4+j*25], 4, phase_conductor, neutral_conductor)
     print("D =", geometry1.D, "m")
