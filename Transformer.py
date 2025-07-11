@@ -7,9 +7,8 @@ Date: 2025-02-03
 """
 
 import numpy as np
-from Bus import Bus
-from math import atan, sin, cos
-from Settings import settings
+from math import sqrt
+j = 1j
 
 
 class Transformer:
@@ -17,8 +16,8 @@ class Transformer:
     Transformer class to hold transformer information
     """
 
-    def __init__(self, name: str, connection: str, bus1: Bus, bus2: Bus, Vprim: float, Vsec: float, power_rating: float,
-                 impedance_percent: float, x_over_r_ratio: float, gnd_impedance=None):
+    def __init__(self, name: str, bus1: str, bus2: str, VprimLN: float, VsecLN: float, power_rating: list[float],
+                 resistance_percent: list[float], reactance_percent: list[float]):
         """
         Constructor for Transformer objects
         :param name: Name of transformer
@@ -30,41 +29,66 @@ class Transformer:
         :param gnd_impedance: Impedance that grounds the Wye side
         """
         self.name = name
-        self.type = connection
         self.bus1 = bus1
         self.bus2 = bus2
-        self.Vprim = Vprim*1e3
-        self.Vsec = Vsec*1e3
-        self.n = self.Vprim/self.Vsec
-        self.power_rating = power_rating*1e6
-        self.impedance_percent = impedance_percent
+        self.VprimLN = VprimLN*1e3
+        self.VsecLN = VsecLN*1e3
+        self.power_rating = np.array(power_rating)*1e3
+        self.resistance_percent = resistance_percent
+        self.reactance_percent = reactance_percent
+
+        self.n = self.VprimLN/self.VsecLN
         self.Ztabc = self.calc_Zt()
-  
+        self.at = self.n*np.array([[1, -1, 0], [0, 1, -1], [-1, 0, 1]])
+        self.bt = self.calc_bt()
+        self.ct = np.zeros((3, 3))
+        self.dt = 1/(self.n*3)*np.array([[1, -1, 0], [1, 2, 0], [-2, -1, 0]])
+        self.At = 1/(self.n*3)*np.array([[2, 1, 0], [0, 2, 1], [1, 0, 2]])
+        self.Bt = self.calc_Bt()
+
 
     def calc_Zt(self):
         #X = X*settings.powerbase/self.power_rating  # updating pu to system power base
-        Z = self.Vprim**2/self.power_rating 
-        Ztabc = np.array([Z, Z, Z], dtype=complex)
+        Zbase = [self.VsecLN**2/self.power_rating[0], self.VsecLN**2/self.power_rating[1], self.VsecLN**2/self.power_rating[2]]
+        Zab = Zbase[0]*(self.resistance_percent[0] + j*self.reactance_percent[0])
+        Zbc = Zbase[1]*(self.resistance_percent[1] + j*self.reactance_percent[1])
+        Zca = Zbase[2]*(self.resistance_percent[2] + j*self.reactance_percent[2])
+        Ztabc = np.diag(np.array([Zab, Zbc, Zca], dtype=complex))
         return Ztabc
+    
 
+    def calc_bt(self):
+        bt1 = [self.Ztabc[0][0], -self.Ztabc[0][0], 0]
+        bt2 = [self.Ztabc[1][1], 2*self.Ztabc[1][1], 0]
+        bt3 = [-2*self.Ztabc[2][2], -self.Ztabc[2][2], 0]
+        bt = (self.n/3)*np.array([bt1, bt2, bt3])
+        return bt
+
+
+    def calc_Bt(self):
+        Bt1 = [2*self.Ztabc[0][0]+self.Ztabc[1][1], 2*(self.Ztabc[1][1]-self.Ztabc[0][0]), 0]
+        Bt2 = [2*(self.Ztabc[1][1]-self.Ztabc[2][2]), 4*self.Ztabc[1][1]-self.Ztabc[2][2], 0]
+        Bt3 = [self.Ztabc[0][0]-4*self.Ztabc[2][2], -self.Ztabc[0][0]-2*self.Ztabc[2][2], 0]
+        Bt = (1/9)*np.array([Bt1, Bt2, Bt3])
+        return Bt
 
 
 
 # validation tests 
 if __name__ == '__main__':
     from Transformer import Transformer
-    from Bus import Bus
-    from Settings import settings
 
-    settings.set_powerbase(100e6)
-    bus1 = Bus("bus1", 15e3, 1)
-    bus2 = Bus("bus2", 30e3, 2)
-    power_rating = 125e6
-    impedance_percent = 8.5
-    x_over_r_ratio = 10
-    transformer1 = Transformer("T1", bus1, bus2, power_rating, impedance_percent, x_over_r_ratio)
-
-    print(f"Name: {transformer1.name}, from {transformer1.bus1.name} to {transformer1.bus2.name},", 
-          f"Rating = {transformer1.power_rating/1e6} MVA")
-    print(f"Z = {transformer1.Zpu}, Y = {transformer1.Ypu}")
-    print(f"Yprim = {transformer1.yprim}")
+    transformer1 = Transformer("T1", "bus2", "bus3", 7.2, 0.24, [100, 50, 50], [0.01, 0.015, 0.015], [0.04, 0.035, 0.035])
+    print(f"nt = {transformer1.n}")
+    print()
+    print(f"Ztabc = {transformer1.Ztabc}")
+    print()
+    print(f"at = {transformer1.at}")
+    print()
+    print(f"bt = {transformer1.bt}")
+    print()
+    print(f"dt = {transformer1.dt}")
+    print()
+    print(f"At = {transformer1.At}")
+    print()
+    print(f"Bt = {transformer1.Bt}")
