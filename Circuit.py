@@ -13,6 +13,7 @@ from Bus import Bus
 from DistributionLine import DistributionLine
 from Geometry import Geometry
 from Conductor import Conductor
+from Transformer import Transformer
 from Settings import settings
 from math import sin, cos
 import pandas as pd
@@ -231,6 +232,18 @@ class Circuit:
         self.changed = True
 
 
+    def add_transformer(self, name: str, bus1: str, bus2: str, Vprim: float, Vsec: float, power_rating: list[float],
+                 resistance_percent: list[float], reactance_percent: list[float]):
+        
+        if name in self.transformers:
+            print(f"{name} already exists. No changes to circuit")
+            return
+
+        transformer = Transformer(name, bus1, bus2, Vprim, Vsec, power_rating, resistance_percent, reactance_percent)
+        self.transformers.update({name: transformer})
+        self.changed = True
+
+
     def get_conductor(self, name: str):
         """
         Retrieves the name of the specified conductor.
@@ -285,17 +298,10 @@ class Circuit:
         self.pv_indexes.append(self.buses[old].index)
     
     
-    def do_fbsweep1(self):
+    def do_fbsweep(self):
         from Solution import LIT
         solution = LIT(self)
-        self.voltages, self.currents = solution.lit1()
-        self.print_data()
-    
-
-    def do_fbsweep2(self):
-        from Solution import LIT
-        solution = LIT(self)
-        self.voltages, self.currents = solution.lit2()
+        self.voltages, self.currents = solution.lit()
         self.print_data()
     
 
@@ -320,6 +326,12 @@ class Circuit:
         """
         for i in range(len(self.buses)):
             print(f"[VLGabc]{i+1} =", np.abs(self.voltages[f"V{i+1}"]))
+        
+        print()
+        
+        for i in range(len(self.buses)):
+            print(f"[Iabc]{i+1} =", np.abs(self.currents[f"I{i+1}"]))
+
 
     
 
@@ -327,5 +339,6 @@ class Circuit:
 if __name__ == '__main__':
     
     import Validations
-    Validations.CreateProject1()
-    Validations.CreateProject2()
+    #Validations.CreateProject1()
+    #Validations.CreateProject2()
+    Validations.CreateProject4()
