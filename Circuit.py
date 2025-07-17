@@ -211,7 +211,7 @@ class Circuit:
             self.geometries.update({name: geometry})
 
 
-    def add_dline_from_geometry(self, name: str, bus1: str, bus2: str, geometry: str, length: float):
+    def add_dline_from_geometry(self, name: str, bus1: str, bus2: str, geometry: str, length: float, ignore_neutral=False):
         """
         Adds a transmission line to system.
         :param name: Name of transmission line
@@ -227,7 +227,7 @@ class Circuit:
             print(f"{name} already exists. No changes to circuit")
             return
         
-        dline = DistributionLine(name, self.get_bus(bus1), self.get_bus(bus2), self.get_geometry(geometry), length)
+        dline = DistributionLine(name, self.get_bus(bus1), self.get_bus(bus2), self.get_geometry(geometry), length, ignore_neutral)
         self.distribution_lines.update({name: dline})
         self.changed = True
 
@@ -304,20 +304,6 @@ class Circuit:
         self.voltages, self.currents = solution.lit()
         self.print_data()
     
-
-    def update_voltages_and_angles(self):
-        """
-        Updates the voltages and angles at each bus with the values calculated in the power flow results.
-        :return:
-        """
-        d = self.x[self.x.index.str.startswith("d")]
-        V = self.x[self.x.index.str.startswith("V")]
-
-        for bus in self.buses:
-            index = self.buses[bus].index-1
-            self.buses[bus].set_bus_v(V.iloc[index, 0])
-            self.buses[bus].set_angle(d.iloc[index, 0])
-
             
     def print_data(self):
         """
@@ -325,12 +311,18 @@ class Circuit:
         :return:
         """
         for i in range(len(self.buses)):
+            if i == 2 or i == 3:
+                W = (1/3)*np.array([[2, 1, 0], [0, 2, 1], [1, 0, 2]])
+                Winv = np.linalg.inv(W)
+                V = np.matmul(Winv, self.voltages[f"V{i+1}"])
+                print(f"[VLGabc]{i+1} =", np.abs(V))
+                continue
+            
             print(f"[VLGabc]{i+1} =", np.abs(self.voltages[f"V{i+1}"]))
-        
         print()
         
-        for i in range(len(self.buses)):
-            print(f"[Iabc]{i+1} =", np.abs(self.currents[f"I{i+1}"]))
+        for i in range(len(self.buses)-1):
+            print(f"[Iabc]{i+1}{i+2} =", np.abs(self.currents[f"I{i+1}{i+2}"]))
 
 
     

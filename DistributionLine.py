@@ -9,7 +9,7 @@ class DistributionLine:
     DistributionLine class to hold distribution line information
     """
 
-    def __init__(self, name, bus1: Bus, bus2: Bus, geometry: Geometry, length: float):
+    def __init__(self, name, bus1: Bus, bus2: Bus, geometry: Geometry, length: float, ignore_neutral=False):
         self.name = name
         self.bus1 = bus1
         self.bus2 = bus2
@@ -17,6 +17,7 @@ class DistributionLine:
         self.length = length
         self.freq = settings.freq
         self.powerbase = settings.powerbase
+        self.ignore_neutral = ignore_neutral
         #self.Zbase = self.bus1.base_kv**2/self.powerbase
         self.Zprim = self.calc_Zprim()
         self.Zabc, self.tn = self.partition_Zprim()
@@ -49,6 +50,9 @@ class DistributionLine:
     def partition_Zprim(self):
         # Partitioning zprim
         zij = self.Zprim[:self.geometry.nphases, :self.geometry.nphases]
+        if self.ignore_neutral == True:
+            return zij*self.length, 0 
+        
         zin = self.Zprim[:self.geometry.nphases, self.geometry.nphases:]
         znj = self.Zprim[self.geometry.nphases:, :self.geometry.nphases]
         znn = self.Zprim[self.geometry.nphases:, self.geometry.nphases:][0, 0]  # Scalar
