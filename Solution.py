@@ -27,51 +27,53 @@ class LIT:
       self.c.update({line.name: line.Yabc + 0.25*np.matmul(line.Yabc, np.matmul(line.Zabc, line.Yabc))})
       self.d.update({line.name: np.identity(3) + 0.5*np.matmul(line.Yabc, line.Zabc)})
     
-    for i in range(self.numbuses):
-      self.Iabc.update({f"I{i+1}": np.array([0, 0, 0], dtype=complex)})
+    self.Iabc.update({"I12": np.array([0, 0, 0], dtype=complex)})
+    self.Iabc.update({"I23": np.array([0, 0, 0], dtype=complex)})
+    self.Iabc.update({"I34": np.array([0, 0, 0], dtype=complex)})
 
-    for bus in self.circ.buses.values():
-      V0 = bus.base_kv/sqrt(3)
-      self.VLGabc.update({f"V{bus.index}": np.array([V0, V0*np.exp(j*-2*np.pi/3), V0*np.exp(j*2*np.pi/3)], dtype=complex)})
+    self.VLGabc.update({"V1": (1e3/sqrt(3))*np.array([12.47, 12.47*np.exp(j*-2*np.pi/3), 12.47*np.exp(j*2*np.pi/3)], dtype=complex)})
+    self.VLGabc.update({"V2": (1e3/sqrt(3))*np.array([12.47, 12.47*np.exp(j*-2*np.pi/3), 12.47*np.exp(j*2*np.pi/3)], dtype=complex)})
+    self.VLGabc.update({"V3": 1e3*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
+    self.VLGabc.update({"V4": 1e3*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
 
 
   def lit(self):
     self.setup()
-    iters = 200
+    iters = 500
     for i in range(iters):
-      self.forward_sweep_project()
-      self.backward_sweep_project()
+      self.forward_sweep()
+      self.backward_sweep()
     
     return self.VLGabc, self.Iabc
 
 
-  def forward_sweep_project(self):
-    VLGabc2 = np.matmul(self.A["line1"], self.VLGabc["V1"]) - np.matmul(self.B["line1"], self.Iabc["I2"])
-    VLGabc3 = np.matmul(self.circ.transformers["T1"].At, self.VLGabc["V2"]) - np.matmul(self.circ.transformers["T1"].Bt, self.Iabc["I3"])
-    VLGabc4 = np.matmul(self.A["line2"], self.VLGabc["V3"]) - np.matmul(self.B["line2"], self.Iabc["I4"])
+  def forward_sweep(self):
+    VLGabc2 = np.matmul(self.A["line1"], self.VLGabc["V1"]) - np.matmul(self.B["line1"], self.Iabc["I12"])
+    VLGabc3 = np.matmul(self.circ.transformers["T1"].At, self.VLGabc["V2"]) - np.matmul(self.circ.transformers["T1"].Bt, self.Iabc["I23"])
+    VLGabc4 = np.matmul(self.A["line2"], self.VLGabc["V3"]) - np.matmul(self.B["line2"], self.Iabc["I34"])
     self.VLGabc["V2"] = VLGabc2
     self.VLGabc["V3"] = VLGabc3
     self.VLGabc["V4"] = VLGabc4
 
   
-  def backward_sweep_project(self):
-    # calculating bus 4 load current
+  def backward_sweep(self):
+    # calculating Eload current
     load1 = self.circ.loads["load1"]
     S = load1.S                                  
     VLGabc4 = self.VLGabc["V4"]                  
-    I4 = np.conjugate(S/VLGabc4)
-    self.Iabc["I4"] = I4
+    Iload = np.conjugate(S/VLGabc4)
 
-    # calculating I3, current in line2
-    I3 = (self.c["line2"] @ self.VLGabc["V3"]
-          + self.d["line2"] @ I4)
-    self.Iabc["I3"] = I3
+    # calculating I34
+    I34 = (self.c["line2"] @ self.VLGabc["V4"]
+          + self.d["line2"] @ Iload)
+    self.Iabc["I34"] = I34
     
-    # calculating I2, current into the primary side of the transformer
-    I2 = np.matmul(self.circ.transformers["T1"].dt, I3)
-    self.Iabc["I2"] = I2
+    # calculating IABC, current into the primary side of the transformer
+    IABC = np.matmul(self.circ.transformers["T1"].dt, I34)
+    self.Iabc["I23"] = IABC
 
-    # build I1 from line1 using I2
-    I1 = (self.c["line1"] @ self.VLGabc["V2"]
-          + self.d["line1"] @ I2)
-    self.Iabc["I1"] = I1
+    # build I12 from line1 using I23
+    I12 = (self.c["line1"] @ self.VLGabc["V2"]
+          + self.d["line1"] @ IABC)
+    self.Iabc["I12"] = I12
+
