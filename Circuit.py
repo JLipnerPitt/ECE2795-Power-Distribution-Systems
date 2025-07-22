@@ -317,7 +317,6 @@ class Circuit:
                 V = np.matmul(Winv, self.voltages[f"V{i+1}"])
                 print(f"[VLGabc]{i+1} =", np.abs(V))
                 continue
-            
             print(f"[VLGabc]{i+1} =", np.abs(self.voltages[f"V{i+1}"]))
         print()
         
@@ -333,4 +332,5 @@ if __name__ == '__main__':
     import Validations
     #Validations.CreateProject1()
     #Validations.CreateProject2()
-    Validations.CreateProject4()
+    Validations.CreateProject4_Balanced_Loads()
+    #Validations.CreateProject4_Unbalanced_Loads()
