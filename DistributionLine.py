@@ -82,7 +82,6 @@ class DistributionLine:
             for k in range(self.geometry.ncond):
                 S[i, k] = abs(self.geometry.d[i] - np.conj(self.geometry.d[k]))
 
-       
         # Primitive potential coefficient matrix
         # 11.17689 = 1/(2*pi*ε0) in appropriate units
         for i in range(self.geometry.ncond):
