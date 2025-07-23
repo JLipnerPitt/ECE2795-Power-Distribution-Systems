@@ -31,12 +31,16 @@ class Load:
         self.phases     = ['A','B','C'] if phases is None else phases
         self.kva = np.array(kva)*1e3
         self.pf = np.array(pf)
+        self.angle = np.acos(pf)
         self.type = type
         self.S = self.calc_S()
     
 
     def calc_S(self):
-        S = np.array([self.kva[0]*(cos(self.pf[0])+j*sin(self.pf[0])), self.kva[1]*(cos(self.pf[1])+j*sin(self.pf[1])), self.kva[2]*(cos(self.pf[2])+j*sin(self.pf[2]))])
+        Sa = self.kva[0]*(cos(self.angle[0])+j*sin(self.angle[0]))
+        Sb = self.kva[1]*(cos(self.angle[1])+j*sin(self.angle[1]))
+        Sc = self.kva[2]*(cos(self.angle[2])+j*sin(self.angle[2]))
+        S = np.array([Sa, Sb, Sc])
         return S
 
 
