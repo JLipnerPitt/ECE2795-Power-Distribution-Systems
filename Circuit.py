@@ -311,16 +311,12 @@ class Circuit:
         :return:
         """
         for i in range(len(self.buses)):
-            if i == 2 or i == 3:
-                W = (1/3)*np.array([[2, 1, 0], [0, 2, 1], [1, 0, 2]])
-                Winv = np.linalg.inv(W)
-                V = np.matmul(Winv, self.voltages[f"V{i+1}"])
-                print(f"[VLGabc]{i+1} =", np.abs(V))
-                continue
             print(f"[VLGabc]{i+1} =", np.abs(self.voltages[f"V{i+1}"]))
         print()
         
         for i in range(len(self.buses)-1):
+            if i == 1:
+                continue
             print(f"[Iabc]{i+1}{i+2} =", np.abs(self.currents[f"I{i+1}{i+2}"]))
 
 
@@ -334,3 +330,4 @@ if __name__ == '__main__':
     #Validations.CreateProject2()
     Validations.CreateProject4_Balanced_Loads()
     #Validations.CreateProject4_Unbalanced_Loads()
+    #Validations.CreateExample8_3()
