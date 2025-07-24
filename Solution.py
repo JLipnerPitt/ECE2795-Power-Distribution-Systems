@@ -35,17 +35,27 @@ class LIT:
 
     self.Voltages.update({"V1": (1e3/sqrt(3))*np.array([12.47, 12.47*np.exp(j*-2*np.pi/3), 12.47*np.exp(j*2*np.pi/3)], dtype=complex)})
     self.Voltages.update({"V2": (1e3/sqrt(3))*np.array([12.47, 12.47*np.exp(j*-2*np.pi/3), 12.47*np.exp(j*2*np.pi/3)], dtype=complex)})
-    self.Voltages.update({"V3": 1e3*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
-    self.Voltages.update({"V4": 1e3*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
-
+    self.Voltages.update({"V3": (1e3/sqrt(3))*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
+    self.Voltages.update({"V4": (1e3/sqrt(3))*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
 
   def lit(self):
     self.setup()
     iters = 100
     for i in range(iters):
-      self.backward_sweep()
+      print(f"Iteration #{i+1}")
       self.forward_sweep()
+      self.backward_sweep()
     
+    self.Voltages["V3"] = np.linalg.inv(self.W) @ self.Voltages["V3"]
+    self.Voltages["V4"] = np.linalg.inv(self.W) @ self.Voltages["V4"]
+    
+    print(f"[VLGabc]{1} =", np.abs(self.Voltages[f"V{1}"]))
+    print(f"[VLGabc]{2} =", np.abs(self.Voltages[f"V{2}"]))
+    print(f"[VLGabc]{3} =", np.abs(self.Voltages[f"V{3}"]))
+    print(f"[VLGabc]{4} =", np.abs(self.Voltages[f"V{4}"]))
+    print("I12 =", np.abs(self.Iabc["I12"]))
+    print("I34 =", np.abs(self.Iabc["I34"]))
+
     return self.Voltages, self.Iabc
 
 
@@ -54,19 +64,23 @@ class LIT:
     
     VLNabc3 = self.circ.transformers["T1"].At @ self.Voltages["V2"] - self.circ.transformers["T1"].Bt @ self.Iabc["I34"]
 
-    VLNabc4 = self.A["line2"] @ self.Voltages["V3"] - self.B["line2"] @ self.Iabc["I34"] 
+    VLNabc4 = self.A["line2"] @ self.Voltages["V3"] - self.B["line2"] @ self.Iabc["I34"]
+
+    print("VLNabc2 =", np.abs(VLNabc2))
+    print("VLNabc3 =", np.abs(VLNabc3))
+    print("VLNabc4 =", np.abs(VLNabc4))
 
     self.Voltages["V2"] = VLNabc2
     self.Voltages["V3"] = VLNabc3
     self.Voltages["V4"] = VLNabc4
-
+  
   
   def backward_sweep(self):
     # calculating bus 4 load current
     load1 = self.circ.loads["load1"]
     S = load1.S                                  
-    VLLabc4 = self.Voltages["V4"]                  
-    IDabc = np.conjugate(S/VLLabc4)
+    VLLabc4 = self.Dv @ self.Voltages["V4"]  # Compute VLL abc from VLN abc
+    IDabc = np.conjugate(S / VLLabc4)
     Iabc = self.Di @ IDabc
     
     # calculating I12, current into the primary side of the transformer
@@ -75,3 +89,7 @@ class LIT:
     # updating currents
     self.Iabc["I34"] = Iabc
     self.Iabc["I12"] = I12
+
+    print("I34 =", np.abs(Iabc))
+    print("I12 =", np.abs(I12))
+    print()

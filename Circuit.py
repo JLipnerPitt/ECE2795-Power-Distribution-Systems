@@ -302,25 +302,7 @@ class Circuit:
         from Solution import LIT
         solution = LIT(self)
         self.voltages, self.currents = solution.lit()
-        self.print_data()
-    
-            
-    def print_data(self):
-        """
-        Prints necessary information from system.
-        :return:
-        """
-        for i in range(len(self.buses)):
-            print(f"[VLGabc]{i+1} =", np.abs(self.voltages[f"V{i+1}"]))
-        print()
         
-        for i in range(len(self.buses)-1):
-            if i == 1:
-                continue
-            print(f"[Iabc]{i+1}{i+2} =", np.abs(self.currents[f"I{i+1}{i+2}"]))
-
-
-    
 
 # validation tests
 if __name__ == '__main__':
