@@ -53,7 +53,7 @@ def CreateProject4_Unbalanced_Loads():
   circ.add_dline_from_geometry("line1", "bus1", "bus2", "Geometry 1", 0.3787879)
   circ.add_dline_from_geometry("line2", "bus3", "bus4", "Geometry 1", 0.4734848, True)
   circ.add_transformer("T1", "bus2", "bus3", 12.47, 4.16, [6000, 6000, 6000], [0.01, 0.01, 0.01], [0.06, 0.06, 0.06])
-  circ.add_load("load1", "bus4", [2000, 2000, 2000], [0.85, 0.9, 0.5])
+  circ.add_load("load1", "bus4", [1500, 2000, 2500], [0.85, 0.9, 0.95])
 
   #print(circ.distribution_lines["line1"].Zabc)
 
