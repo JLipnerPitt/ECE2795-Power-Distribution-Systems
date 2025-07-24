@@ -34,13 +34,13 @@ class LIT:
     self.Iabc.update({"I34": np.array([0, 0, 0], dtype=complex)})
 
     self.Voltages.update({"V1": (1e3/sqrt(3))*np.array([12.47, 12.47*np.exp(j*-2*np.pi/3), 12.47*np.exp(j*2*np.pi/3)], dtype=complex)})
-    self.Voltages.update({"V2": (1e3/sqrt(3))*np.array([12.47, 12.47*np.exp(j*-2*np.pi/3), 12.47*np.exp(j*2*np.pi/3)], dtype=complex)})
-    self.Voltages.update({"V3": (1e3/sqrt(3))*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
-    self.Voltages.update({"V4": (1e3/sqrt(3))*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
+    self.Voltages.update({"V2": (1e3)*np.array([12.47, 12.47*np.exp(j*-2*np.pi/3), 12.47*np.exp(j*2*np.pi/3)], dtype=complex)})
+    self.Voltages.update({"V3": (1e3)*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
+    self.Voltages.update({"V4": (1e3)*np.array([4.16, 4.16*np.exp(j*-2*np.pi/3), 4.16*np.exp(j*2*np.pi/3)], dtype=complex)})
 
   def lit(self):
     self.setup()
-    iters = 100
+    iters = 15
     for i in range(iters):
       print(f"Iteration #{i+1}")
       self.forward_sweep()
@@ -79,7 +79,8 @@ class LIT:
     # calculating bus 4 load current
     load1 = self.circ.loads["load1"]
     S = load1.S                                  
-    VLLabc4 = self.Dv @ self.Voltages["V4"]  # Compute VLL abc from VLN abc
+    VLLabc4 = self.Di @ self.Voltages["V4"]  # Compute VLL abc from VLN abc
+
     IDabc = np.conjugate(S / VLLabc4)
     Iabc = self.Di @ IDabc
     
