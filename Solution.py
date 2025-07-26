@@ -1,6 +1,7 @@
 from Circuit import Circuit
 from math import sqrt
 import numpy as np
+import pandas as pd
 j = 1j
 
 class LIT:
@@ -48,14 +49,28 @@ class LIT:
     
     self.Voltages["V3"] = np.linalg.inv(self.W) @ self.Voltages["V3"]
     self.Voltages["V4"] = np.linalg.inv(self.W) @ self.Voltages["V4"]
-    
-    print(f"[VLGabc]{1} =", np.abs(self.Voltages[f"V{1}"]))
-    print(f"[VLGabc]{2} =", np.abs(self.Voltages[f"V{2}"]))
-    print(f"[VLGabc]{3} =", np.abs(self.Voltages[f"V{3}"]))
-    print(f"[VLGabc]{4} =", np.abs(self.Voltages[f"V{4}"]))
-    print("I12 =", np.abs(self.Iabc["I12"]))
-    print("I34 =", np.abs(self.Iabc["I34"]))
 
+    magnitudes = []
+    angles = []
+    for i in range(len(self.Voltages)):
+      magnitudes.append(np.abs(self.Voltages[f"V{i+1}"]))
+      angles.append(np.rad2deg(np.angle(self.Voltages[f"V{i+1}"])))
+    
+    magnitudes.append(np.abs(self.Iabc["I12"]))
+    magnitudes.append(np.abs(self.Iabc["I34"]))
+
+    angles.append(np.rad2deg(np.angle(self.Iabc["I12"])))
+    angles.append(np.rad2deg(np.angle(self.Iabc["I34"])))
+
+    
+    magnitudes = pd.DataFrame(magnitudes, index=["VLGabc1", "VLGabc2", "VLGabc3", "VLGabc4", "I12", "I34"], columns=["Phase A Magnitude", "Phase B Magnitude", "Phase C Magnitude"])                                                                                                     
+    angles = pd.DataFrame(angles, index=["VLGabc1", "VLGabc2", "VLGabc3", "VLGabc4", "I12", "I34"], columns=["Phase A Angle", "Phase B Angle", "Phase C Angle"]) 
+                                                                                                         
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', 1000)
+    print(magnitudes.to_string())
+    print(angles.to_string())
     return self.Voltages, self.Iabc
 
 
